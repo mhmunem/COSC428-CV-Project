@@ -66,6 +66,6 @@ Ensure you have the following installed on your local machine:
 
 For any questions or issues, please contact the project contributors:
 
-- **Mohammad Munem**: [mohammad.munem@pg.canterbury.ac.nz](mailto:mohammad.munem@pg.canterbury.ac.nz)
+- **Mohammad Munem**: [mohammad.munem@canterbury.ac.nz](mailto:mohammad.munem@canterbury.ac.nz)
 
 - **Richard Green**:  [richard.green@canterbury.ac.nz](mailto:richard.green@canterbury.ac.nz)
