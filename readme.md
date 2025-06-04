@@ -18,23 +18,23 @@ Ensure you have the following installed on your local machine:
 1. **Clone the Repository**
 
    ```bash
-   git clone <repository-url>
-   cd <repository-directory> 
+   git clone https://github.com/mhmunem/COSC428-CV-Project.git
+   cd COSC428-CV-Project
    ```
 
 2. **Create a Virtual Environment (Optional but Recommended)**
 
     ```bash
-    python -m venv venv
-    source venv/bin/activate  # On Windows: venv\Scripts\activate
+    python -m venv .venv
+    source .venv/bin/activate  # On Windows: venv\Scripts\activate
     ```
-   
+
 3. **Install Required Libraries**
 
     ```bash
     pip install -r requirements.txt
     ```
-   
+
 ## Running the Notebook
 
 1. **Launch Jupyter Notebook**
