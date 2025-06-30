@@ -38,7 +38,12 @@ Ensure you have the following installed on your local machine:
     ```
 ---
 
-## Running the Notebook
+## Downloadnig Data
+Run the `download_data.py` file on src to download all the data.
+
+---
+
+## Running the Notebooks
 
 1. **Launch Jupyter Notebook**
 
