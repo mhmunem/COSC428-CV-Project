@@ -209,4 +209,4 @@ __marimo__/
 # project ignore files
 01_raw/
 02_intermediate/
-# 03_processed/
+03_processed/
