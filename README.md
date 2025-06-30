@@ -2,7 +2,9 @@
 
 ## Project Overview
 
-This project involves the classification of hyperspectral images (HSI) using a 3D Convolutional Neural Network (CNN). The provided Jupyter Notebook (`hsi-test-3d-cnn.ipynb`) contains the code necessary to train and test the model, leveraging various Python libraries listed in the `requirements.txt` file.
+This project involves the classification of hyperspectral images (HSI) using a 3D Convolutional Neural Network (CNN). The provided Jupyter Notebook (`20250628MM-IP-HSI.ipynb`) contains the code necessary to train and test the model, leveraging various Python libraries listed in the `requirements.txt` file.
+
+---
 
 ## Setup Instructions
 
@@ -25,8 +27,8 @@ Ensure you have the following installed on your local machine:
 2. **Create a Virtual Environment (Optional but Recommended)**
 
     ```bash
-    python -m venv .venv
-    source .venv/bin/activate  # On Windows: venv\Scripts\activate
+    python -m venv venv
+    source venv/bin/activate  # On Windows: venv/Scripts/activate
     ```
 
 3. **Install Required Libraries**
@@ -34,6 +36,7 @@ Ensure you have the following installed on your local machine:
     ```bash
     pip install -r requirements.txt
     ```
+---
 
 ## Running the Notebook
 
@@ -45,11 +48,13 @@ Ensure you have the following installed on your local machine:
 
 2. **Open the Notebook**
 
-    Navigate to the project directory in the Jupyter Notebook interface and open `hsi-test-3d-cnn.ipynb`.
+    Navigate to the project directory in the find the Jupyter Notebook interface and open the `20250628MM-IP-HSI.ipynb`.
 
 3. **Execute the Notebook**
 
-    Run the notebook cells sequentially to train and evaluate the CNN model on the provided hyperspectral image data.
+    Run the notebook cells sequentially to train and evaluate the CNN models on the provided hyperspectral image data.
+
+---
 
 ## Notes
 
@@ -57,10 +62,11 @@ Ensure you have the following installed on your local machine:
 
 - **Dependencies**: If you encounter any issues with specific versions of libraries, you might need to install them individually or adjust the `requirements.txt` file.
 
-- **Dataset naming convention**: For ease of use chnage the `dataset` variable while running a specific data (i.e. use `IP` when running indian pines data, `SA` for Salinas Valley data and `PU` for Pavia University data)
+- **Dataset naming convention**: For ease of use chnage the `DATASET` variable while running a specific data (i.e. use `IP` when running indian pines data, `SA` for Salinas Valley data and `PU` for Pavia University data)
 
-- **Testing other models**: The compariison models can be found at the [DeepHyperX](https://github.com/nshaud/DeepHyperX) github page.
+- **Testing other models**: These models can be compared with other models present in the [DeepHyperX](https://github.com/nshaud/DeepHyperX) github page.
 
+---
 
 ## Contact
 
