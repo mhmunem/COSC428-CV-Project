@@ -1,82 +1,61 @@
-# Hyperspectral Image Classification
+# HSI Classifier
 
-## Project Overview
+<a target="_blank" href="https://cookiecutter-data-science.drivendata.org/">
+    <img src="https://img.shields.io/badge/CCDS-Project%20template-328F97?logo=cookiecutter" />
+</a>
 
-This project involves the classification of hyperspectral images (HSI) using a 3D Convolutional Neural Network (CNN). The provided Jupyter Notebook (`20250628MM-IP-HSI.ipynb`) contains the code necessary to train and test the model, leveraging various Python libraries listed in the `requirements.txt` file.
+This project classifies Hyper Spectral Images (HSIs) of land area captured via Satelite.
 
----
+## Project Organization
 
-## Setup Instructions
+```
+├── LICENSE            <- Open-source license if one is chosen
+├── Makefile           <- Makefile with convenience commands like `make data` or `make train`
+├── README.md          <- The top-level README for developers using this project.
+├── data
+│   ├── external       <- Data from third party sources.
+│   ├── interim        <- Intermediate data that has been transformed.
+│   ├── processed      <- The final, canonical data sets for modeling.
+│   └── raw            <- The original, immutable data dump.
+│
+├── docs               <- A default mkdocs project; see www.mkdocs.org for details
+│
+├── models             <- Trained and serialized models, model predictions, or model summaries
+│
+├── notebooks          <- Jupyter notebooks. Naming convention is a number (for ordering),
+│                         the creator's initials, and a short `-` delimited description, e.g.
+│                         `1.0-jqp-initial-data-exploration`.
+│
+├── pyproject.toml     <- Project configuration file with package metadata for 
+│                         hsi_classifier and configuration for tools like black
+│
+├── references         <- Data dictionaries, manuals, and all other explanatory materials.
+│
+├── reports            <- Generated analysis as HTML, PDF, LaTeX, etc.
+│   └── figures        <- Generated graphics and figures to be used in reporting
+│
+├── requirements.txt   <- The requirements file for reproducing the analysis environment, e.g.
+│                         generated with `pip freeze > requirements.txt`
+│
+├── setup.cfg          <- Configuration file for flake8
+│
+└── hsi_classifier   <- Source code for use in this project.
+    │
+    ├── __init__.py             <- Makes hsi_classifier a Python module
+    │
+    ├── config.py               <- Store useful variables and configuration
+    │
+    ├── dataset.py              <- Scripts to download or generate data
+    │
+    ├── features.py             <- Code to create features for modeling
+    │
+    ├── modeling                
+    │   ├── __init__.py 
+    │   ├── predict.py          <- Code to run model inference with trained models          
+    │   └── train.py            <- Code to train models
+    │
+    └── plots.py                <- Code to create visualizations
+```
 
-### Prerequisites
+--------
 
-Ensure you have the following installed on your local machine:
-
-- Python 3.9 or later
-- Jupyter Notebook or JupyterLab
-
-### Installation
-
-1. **Clone the Repository**
-
-   ```bash
-   git clone https://github.com/mhmunem/COSC428-CV-Project.git
-   cd COSC428-CV-Project
-   ```
-
-2. **Create a Virtual Environment (Optional but Recommended)**
-
-    ```bash
-    python -m venv venv
-    source venv/bin/activate  # On Windows: venv/Scripts/activate
-    ```
-
-3. **Install Required Libraries**
-
-    ```bash
-    pip install -r requirements.txt
-    ```
----
-
-## Downloadnig Data
-Run the `download_data.py` file on src to download all the data.
-
----
-
-## Running the Notebooks
-
-1. **Launch Jupyter Notebook**
-
-    ```bash
-    jupyter notebook
-    ```
-
-2. **Open the Notebook**
-
-    Navigate to the project directory in the find the Jupyter Notebook interface and open the `20250628MM-IP-HSI.ipynb`.
-
-3. **Execute the Notebook**
-
-    Run the notebook cells sequentially to train and evaluate the CNN models on the provided hyperspectral image data.
-
----
-
-## Notes
-
-- **Data**: Ensure that the hyperspectral image data is correctly formatted and placed in the appropriate directory as specified in the notebook. Uncomment the specific data download links in the first cell. Store the data in a data folder.
-
-- **Dependencies**: If you encounter any issues with specific versions of libraries, you might need to install them individually or adjust the `requirements.txt` file.
-
-- **Dataset naming convention**: For ease of use chnage the `DATASET` variable while running a specific data (i.e. use `IP` when running indian pines data, `SA` for Salinas Valley data and `PU` for Pavia University data)
-
-- **Testing other models**: These models can be compared with other models present in the [DeepHyperX](https://github.com/nshaud/DeepHyperX) github page.
-
----
-
-## Contact
-
-For any questions or issues, please contact the project contributors:
-
-- **Mohammad Munem**: [mohammad.munem@canterbury.ac.nz](mailto:mohammad.munem@canterbury.ac.nz)
-
-- **Richard Green**:  [richard.green@canterbury.ac.nz](mailto:richard.green@canterbury.ac.nz)
