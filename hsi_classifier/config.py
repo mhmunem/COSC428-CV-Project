@@ -1,5 +1,6 @@
 from pathlib import Path
-from typing import List, Dict
+from typing import Dict, List
+
 from dotenv import load_dotenv
 from loguru import logger
 
@@ -23,19 +24,19 @@ FIGURES_DIR = REPORTS_DIR / "figures"
 
 
 DATASET_URLS: Dict[str, List[str]] = {
-        "IP": [
-            "http://www.ehu.eus/ccwintco/uploads/c/c4/Indian_pines_gt.mat",
-            "http://www.ehu.eus/ccwintco/uploads/6/67/Indian_pines_corrected.mat"
-        ],
-        "SA": [
-            "http://www.ehu.eus/ccwintco/uploads/f/fa/Salinas_gt.mat",
-            "http://www.ehu.es/ccwintco/uploads/a/a3/Salinas_corrected.mat"
-        ],
-        "PU": [
-            "http://www.ehu.es/ccwintco/uploads/5/50/PaviaU_gt.mat",
-            "http://www.ehu.es/ccwintco/uploads/e/ee/PaviaU.mat"
-        ]
-    }
+    "IP": [
+        "http://www.ehu.eus/ccwintco/uploads/c/c4/Indian_pines_gt.mat",
+        "http://www.ehu.eus/ccwintco/uploads/6/67/Indian_pines_corrected.mat",
+    ],
+    "SA": [
+        "http://www.ehu.eus/ccwintco/uploads/f/fa/Salinas_gt.mat",
+        "http://www.ehu.es/ccwintco/uploads/a/a3/Salinas_corrected.mat",
+    ],
+    "PU": [
+        "http://www.ehu.es/ccwintco/uploads/5/50/PaviaU_gt.mat",
+        "http://www.ehu.es/ccwintco/uploads/e/ee/PaviaU.mat",
+    ],
+}
 
 # If tqdm is installed, configure loguru with tqdm.write
 # https://github.com/Delgan/loguru/issues/135

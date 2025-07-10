@@ -1,55 +1,61 @@
-import scipy.io as sio
-import numpy as np
-from sklearn.decomposition import PCA
-
-from pathlib import Path
-from typing import Any
-
 from pathlib import Path
 from typing import Any
 
 import numpy as np
-import torch
+from torch import Tensor
 from torch.utils.data import DataLoader, Dataset
 
-from hsi_classifier.load_data import load_image_data, load_label_data
 from hsi_classifier.config import INTERIM_DATA_DIR
+from hsi_classifier.load_data import load_image_data, load_label_data
 
+# GLOBAL VARIABLES
+DATA_DIR = INTERIM_DATA_DIR
+TEST_DATA = Path(f"{DATA_DIR}/X_test.npy")
+TEST_LABELS = Path(f"{DATA_DIR}/y_test.npy")
+TRAIN_DATA = Path(f"{DATA_DIR}/X_train.npy")
+TRAIN_LABELS = Path(f"{DATA_DIR}/y_train.npy")
 
 
 class HSI_data(Dataset[Any]):
+    """HSI Data class"""
+
     idx: int  # requested data index
-    x: torch.Tensor
-    y: torch.Tensor
+    x: Tensor
+    y: Tensor
 
-    TRAIN_MAX = 255.0
-    TRAIN_NORMALIZED_MEAN = 0.1306604762738429
-    TRAIN_NORMALIZED_STDEV = 0.3081078038564622
+    # CLASS VARIABLES
+    # TRAIN_MAX = 255.0
+    # TRAIN_NORMALIZED_MEAN = 0.1306604762738429
+    # TRAIN_NORMALIZED_STDEV = 0.3081078038564622
 
-    def __init__(self, data: np.ndarray, targets: np.ndarray):
+    def __init__(self, data: np.ndarray, targets: np.ndarray) -> None:
+        """Initias the class with data and labels"""
         if len(data) != len(targets):
             raise ValueError(
-                "data and targets must be the same length. "
-                f"{len(data)} != {len(targets)}"
+                f"data and targets must be the same length.{len(data)} != {len(targets)}"
             )
 
         self.data = data
         self.targets = targets
 
     def __len__(self):
+        """Calculates length of the data"""
         return len(self.data)
 
-    def __getitem__(self, idx: int) -> tuple[torch.Tensor, torch.Tensor]:
+    def __getitem__(self, idx: int) -> tuple[Tensor, Tensor]:
+        """Gets x and y index from the dataset"""
         x = self.get_x(idx)
         y = self.get_y(idx)
         return x, y
 
-    def get_x(self, idx: int):
+    def get_x(self, idx: int) -> Tensor:
+        """Gets index and preprocessed x from the dataset"""
         self.idx = idx
         self.preprocess_x()
         return self.x
 
-    def preprocess_x(self):
+    def preprocess_x(self) -> None:
+        """Preprocesses x"""
         self.x = self.data[self.idx].copy().astype(np.float64)
         # self.x /= self.TRAIN_MAX
         # self.x -= self.TRAIN_NORMALIZED_MEAN
@@ -58,27 +64,26 @@ class HSI_data(Dataset[Any]):
         # self.x = torch.from_numpy(self.x)
         # self.x = self.x.unsqueeze(0)
 
-    def get_y(self, idx: int):
+    def get_y(self, idx: int) -> Tensor:
         self.idx = idx
         self.preprocess_y()
         return self.y
 
-    def preprocess_y(self):
+    def preprocess_y(self) -> None:
+        """Preprocesses y"""
         self.y = self.targets[self.idx]
         # self.y = torch.tensor(self.y, dtype=torch.long)
 
 
-
-
-# Data configuration
-DATA_DIR = INTERIM_DATA_DIR
-TEST_DATA = Path(f"{DATA_DIR}/X_test.npy")
-TEST_LABELS = Path(f"{DATA_DIR}/y_test.npy")
-TRAIN_DATA = Path(f"{DATA_DIR}/X_train.npy")
-TRAIN_LABELS = Path(f"{DATA_DIR}/y_train.npy")
+# def apply_pca(X, num_components=75):
+#     reshaped_X = np.reshape(X, (-1, X.shape[2]))
+#     pca = PCA(n_components=num_components, whiten=True)
+#     transformed_X = pca.fit_transform(reshaped_X)
+#     reshaped_back = np.reshape(transformed_X, (X.shape[0], X.shape[1], num_components))
+#     return reshaped_back
 
 def create_dataloader(
-    batch_size: int,  data_path: Path, label_path: Path, shuffle: bool = True
+    batch_size: int, data_path: Path, label_path: Path, shuffle: bool = True
 ) -> DataLoader[Any]:
     data = load_image_data(data_path)
     label_data = load_label_data(label_path)
@@ -88,22 +93,16 @@ def create_dataloader(
         shuffle=shuffle,
         num_workers=0,
     )
-def apply_pca(X, num_components=75):
-    reshaped_X = np.reshape(X, (-1, X.shape[2]))
-    pca = PCA(n_components=num_components, whiten=True)
-    transformed_X = pca.fit_transform(reshaped_X)
-    reshaped_back = np.reshape(transformed_X, (X.shape[0], X.shape[1], num_components))
-    return reshaped_back
+
 
 
 def main():
-
     TRAIN_DATA = Path(f"{DATA_DIR}/X_train.npy")
-    TRAIN_LABELS = Path(f"{DATA_DIR}/y_train.npy")
+    # TRAIN_LABELS = Path(f"{DATA_DIR}/y_train.npy")
     data = load_image_data(TRAIN_DATA)
     print(data.shape)
-    K = 100 if data.shape[1] == 145 else 40
-    data, _ = apply_pca(data, num_components=K)
+    # K = 100 if data.shape[1] == 145 else 40
+    # data, _ = apply_pca(data, num_components=K)
 
     # dt=create_dataloader(64,TRAIN_DATA,TRAIN_LABELS,shuffle=False)
     # # Test the DataLoader
@@ -125,7 +124,6 @@ def main():
     #         break
 
     # print("\nDataLoader test complete.")
-
 
 
 if __name__ == "__main__":

@@ -21,7 +21,7 @@ requirements:
 
 
 ## Delete all compiled Python files
-.PHONY: clean
+.PHONY: clean # works only in linux with find functionality
 clean:
 	find . -type f -name "*.py[co]" -delete
 	find . -type d -name "__pycache__" -delete
