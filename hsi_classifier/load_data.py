@@ -1,10 +1,18 @@
 import os
-import requests
+import time
 from typing import List
-from loguru import logger
 from pathlib import Path
-from hsi_classifier.config import RAW_DATA_DIR, DATASET_URLS
 
+import requests
+import numpy as np
+import scipy.io as sio
+from loguru import logger
+from sklearn.model_selection import train_test_split
+
+from hsi_classifier.config import RAW_DATA_DIR, DATASET_URLS, INTERIM_DATA_DIR
+
+# Global Variables
+DEFAULT_TEST_RATIO = 0.80
 
 def ensure_directory_exists(directory_path: Path | str) -> None:
     """Ensure the directory for the given path exists."""
@@ -13,12 +21,9 @@ def ensure_directory_exists(directory_path: Path | str) -> None:
     directory_path.mkdir(parents=True, exist_ok=True)
 
 
-import os
-import requests
-from loguru import logger
-import time
-
-def download_file(file_url: str, output_file_path: str, max_retries: int = 3, delay: int = 5) -> None:
+def download_file(file_url: str, output_file_path: str,
+                  max_retries: int = 3,
+                  delay: int = 5) -> None:
     """Download a file with resume support and retries."""
     retries = 0
     while retries < max_retries:
@@ -61,7 +66,8 @@ def download_file(file_url: str, output_file_path: str, max_retries: int = 3, de
             return
     logger.error(f"Failed to download {file_url} after {max_retries} retries.")
 
-def download_single_file(file_url: str, target_directory: Path | str) -> None:
+def download_single_file(file_url: str,
+                         target_directory: Path | str) -> None:
     """Download a single file if it doesn't already exist."""
     file_name = os.path.basename(file_url)
     full_file_path = os.path.join(target_directory, file_name)
@@ -72,7 +78,8 @@ def download_single_file(file_url: str, target_directory: Path | str) -> None:
         logger.info(f"{file_name} already exists. Skipping.")
 
 
-def download_multiple_files(file_urls: List[str], target_directory: Path | str) -> None:
+def download_multiple_files(file_urls: List[str],
+                            target_directory: Path | str) -> None:
     """Download multiple files if they don't already exist."""
     for file_url in file_urls:
         download_single_file(file_url, target_directory)
@@ -94,19 +101,65 @@ def validate_dataset_type(dataset_type: str) -> str:
     return dataset_type
 
 
-def download_dataset(dataset_type: str, target_directory: Path | str = RAW_DATA_DIR) -> None:
+def download_dataset(dataset_type: str,
+                     target_directory: Path | str = RAW_DATA_DIR) -> None:
     """Download data files based on the specified dataset type."""
     dataset_type = validate_dataset_type(dataset_type)
     dataset_urls = get_dataset_urls(dataset_type)
     ensure_directory_exists(target_directory)
     download_multiple_files(dataset_urls, target_directory)
 
+def load_raw_data(data_type: str,
+                  data_path: Path | str = RAW_DATA_DIR) -> tuple[np.ndarray, np.ndarray]:
+    if data_type == 'IP':
+        data = sio.loadmat(os.path.join(data_path, 'Indian_pines_corrected.mat'))['indian_pines_corrected']
+        labels = sio.loadmat(os.path.join(data_path, 'Indian_pines_gt.mat'))['indian_pines_gt']
+    elif data_type == 'SA':
+        data = sio.loadmat(os.path.join(data_path, 'Salinas_corrected.mat'))['salinas_corrected']
+        labels = sio.loadmat(os.path.join(data_path, 'Salinas_gt.mat'))['salinas_gt']
+    elif data_type == 'PU':
+        data = sio.loadmat(os.path.join(data_path, 'PaviaU.mat'))['paviaU']
+        labels = sio.loadmat(os.path.join(data_path, 'PaviaU_gt.mat'))['paviaU_gt']
+    else:
+        raise ValueError("Invalid dataset name. Choose from 'IP', 'SA', or 'PU'.")
+    return data, labels
+
+def create_traning_data(data: np.ndarray,
+                        labels: np.ndarray,
+                        test_size: float = DEFAULT_TEST_RATIO) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
+    """Creates traing and testing data from data and labels"""
+    X_train, X_test, y_train, y_test = train_test_split(data,labels,test_size=test_size)
+    return X_train, y_train, X_test, y_test
+
+def save_interim_data(X_train: np.ndarray,
+                      y_train: np.ndarray,
+                      X_test: np.ndarray,
+                      y_test: np.ndarray) -> None:
+    #Step 1: create or check directory exist
+    ensure_directory_exists(INTERIM_DATA_DIR)
+    # Step 2: Save the files
+    np.save(os.path.join(INTERIM_DATA_DIR, "X_train.npy"), X_train)
+    np.save(os.path.join(INTERIM_DATA_DIR, "y_train.npy"), y_train)
+    np.save(os.path.join(INTERIM_DATA_DIR, "X_test.npy"), X_test)
+    np.save(os.path.join(INTERIM_DATA_DIR, "y_test.npy"), y_test)
+    print(f"Interim data saved successfully to {INTERIM_DATA_DIR}")
+
+def load_image_data(file_path: Path | str):
+  return np.load(file_path)
+
+def load_label_data(file_path: Path | str):
+  return np.load(file_path)
 
 def main():
     # Download Indian Pines dataset
-    download_dataset("IP")
-    download_dataset("SA")
-    download_dataset("PU")
+    # download_dataset("IP")
+    data_type = "IP"
+    X,y = load_raw_data(data_type)
+    X_train, y_train, X_test, y_test = create_traning_data(X,y)
+    save_interim_data(X_train, y_train, X_test, y_test)
+    print(X_train.shape)
+    print(y_train.shape)
+
 
 
 if __name__ == "__main__":

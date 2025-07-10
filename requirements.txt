@@ -1,9 +1,14 @@
 loguru
 mkdocs
+numpy
+scikit-learn
+tensorflow
+torch
 pip
 python-dotenv
 ruff
 requests
+scipy
 tqdm
 typer
 -e .
