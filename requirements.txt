@@ -1,14 +1,18 @@
+# Python 3.10
 loguru
+matplotlib
 mkdocs
 numpy
-scikit-learn
-tensorflow
-torch
 pip
 python-dotenv
-ruff
 requests
+ruff
+seaborn
+spectral
+scikit-learn
 scipy
+tensorflow
+torch
 tqdm
 typer
 -e .

@@ -2,85 +2,78 @@ from pathlib import Path
 from typing import Any
 
 import numpy as np
-from torch import Tensor
+import torch
 from torch.utils.data import DataLoader, Dataset
+from sklearn.decomposition import PCA
 
-from hsi_classifier.config import INTERIM_DATA_DIR
-from hsi_classifier.load_data import load_image_data, load_label_data
+from hsi_classifier.config import RAW_DATA_DIR
+# from hsi_classifier.load_data import load_image_data, load_label_data
+
 
 # GLOBAL VARIABLES
-DATA_DIR = INTERIM_DATA_DIR
-TEST_DATA = Path(f"{DATA_DIR}/X_test.npy")
-TEST_LABELS = Path(f"{DATA_DIR}/y_test.npy")
-TRAIN_DATA = Path(f"{DATA_DIR}/X_train.npy")
-TRAIN_LABELS = Path(f"{DATA_DIR}/y_train.npy")
+TRAIN_DATA = Path(f"{INTERIM_DATA_DIR}/X_train.npy")
+TRAIN_LABELS = Path(f"{INTERIM_DATA_DIR}/y_train.npy")
+TEST_DATA = Path(f"{INTERIM_DATA_DIR}/X_test.npy")
+TEST_LABELS = Path(f"{INTERIM_DATA_DIR}/y_test.npy")
+PCA_COMPONENT = 15
+BATCH_SIZE = 64
+PATCH_SIZE = 25
 
 
-class HSI_data(Dataset[Any]):
-    """HSI Data class"""
+import os
+import numpy as np
+from scipy.io import loadmat
+from sklearn.decomposition import PCA
+from sklearn.model_selection import train_test_split
+from torch.utils.data import Dataset, DataLoader
 
-    idx: int  # requested data index
-    x: Tensor
-    y: Tensor
+class HSIDataset(Dataset):
+    def __init__(self, dataset_name, patch_size, train_rate=0.3, val_rate=0.1, n_pca=15):
+        self.data, self.labels = self.load_data(dataset_name)
+        self.data, self.pca = self.apply_pca(self.data, n_pca)
+        self.train_gt, self.test_gt = self.sample_gt(self.labels, train_rate)
+        self.val_gt, self.test_gt = self.sample_gt(self.test_gt, val_rate / (1 - train_rate))
+        self.patch_size = patch_size
 
-    # CLASS VARIABLES
-    # TRAIN_MAX = 255.0
-    # TRAIN_NORMALIZED_MEAN = 0.1306604762738429
-    # TRAIN_NORMALIZED_STDEV = 0.3081078038564622
+    def load_data(self, dataset_name):
+        # Load dataset-specific data
+        data_path = f"{RAW_DATA_DIR}/{dataset_name}/data.mat"
+        label_path = f"{RAW_DATA_DIR}/{dataset_name}/labels.mat"
+        data = loadmat(data_path)
+        first_key = next(key for key in data.keys() if not key.startswith('__'))
+        data = data[first_key]
+        labels = loadmat(label_path)
+        first_key = next(key for key in labels.keys() if not key.startswith('__'))
+        labels = labels[first_key]
+        return data, labels
 
-    def __init__(self, data: np.ndarray, targets: np.ndarray) -> None:
-        """Initias the class with data and labels"""
-        if len(data) != len(targets):
-            raise ValueError(
-                f"data and targets must be the same length.{len(data)} != {len(targets)}"
-            )
+    def apply_pca(self, data, n_components):
+        # Apply PCA for dimensionality reduction
+        new_data = np.reshape(data, (-1, data.shape[2]))
+        pca = PCA(n_components=n_components, whiten=True)
+        new_data = pca.fit_transform(new_data)
+        return np.reshape(new_data, (data.shape[0], data.shape[1], n_components)), pca
 
-        self.data = data
-        self.targets = targets
+    def sample_gt(self, gt, train_rate):
+        # Split data into training and testing sets
+        indices = np.nonzero(gt)
+        X = list(zip(*indices))
+        y = gt[indices].ravel()
+        train_gt, test_gt = train_test_split(X, train_size=train_rate, stratify=y, random_state=100)
+        return train_gt, test_gt
 
     def __len__(self):
-        """Calculates length of the data"""
-        return len(self.data)
+        return len(self.indices)
 
-    def __getitem__(self, idx: int) -> tuple[Tensor, Tensor]:
-        """Gets x and y index from the dataset"""
-        x = self.get_x(idx)
-        y = self.get_y(idx)
-        return x, y
+    def __getitem__(self, idx):
+        # Generate 3D patches
+        x, y = self.indices[idx]
+        x1, y1 = x - self.patch_size // 2, y - self.patch_size // 2
+        x2, y2 = x1 + self.patch_size, y1 + self.patch_size
+        patch = self.data[x1:x2, y1:y2]
+        label = self.labels[x, y]
+        return patch, label
 
-    def get_x(self, idx: int) -> Tensor:
-        """Gets index and preprocessed x from the dataset"""
-        self.idx = idx
-        self.preprocess_x()
-        return self.x
-
-    def preprocess_x(self) -> None:
-        """Preprocesses x"""
-        self.x = self.data[self.idx].copy().astype(np.float64)
-        # self.x /= self.TRAIN_MAX
-        # self.x -= self.TRAIN_NORMALIZED_MEAN
-        # self.x /= self.TRAIN_NORMALIZED_STDEV
-        # self.x = self.x.astype(np.float32)
-        # self.x = torch.from_numpy(self.x)
-        # self.x = self.x.unsqueeze(0)
-
-    def get_y(self, idx: int) -> Tensor:
-        self.idx = idx
-        self.preprocess_y()
-        return self.y
-
-    def preprocess_y(self) -> None:
-        """Preprocesses y"""
-        self.y = self.targets[self.idx]
-        # self.y = torch.tensor(self.y, dtype=torch.long)
-
-
-# def apply_pca(X, num_components=75):
-#     reshaped_X = np.reshape(X, (-1, X.shape[2]))
-#     pca = PCA(n_components=num_components, whiten=True)
-#     transformed_X = pca.fit_transform(reshaped_X)
-#     reshaped_back = np.reshape(transformed_X, (X.shape[0], X.shape[1], num_components))
-#     return reshaped_back
 
 def create_dataloader(
     batch_size: int, data_path: Path, label_path: Path, shuffle: bool = True
@@ -88,7 +81,7 @@ def create_dataloader(
     data = load_image_data(data_path)
     label_data = load_label_data(label_path)
     return DataLoader(
-        dataset=HSI_data(data, label_data),
+        dataset=HSI_data(data, label_data, patch_size=PATCH_SIZE),
         batch_size=batch_size,
         shuffle=shuffle,
         num_workers=0,
@@ -96,35 +89,19 @@ def create_dataloader(
 
 
 
-def main():
-    TRAIN_DATA = Path(f"{DATA_DIR}/X_train.npy")
-    # TRAIN_LABELS = Path(f"{DATA_DIR}/y_train.npy")
-    data = load_image_data(TRAIN_DATA)
-    print(data.shape)
-    # K = 100 if data.shape[1] == 145 else 40
-    # data, _ = apply_pca(data, num_components=K)
-
-    # dt=create_dataloader(64,TRAIN_DATA,TRAIN_LABELS,shuffle=False)
-    # # Test the DataLoader
-    # print("Testing DataLoader...\n")
-
-    # # Iterate through a few batches
-    # for batch_idx, (batch_data, batch_labels) in enumerate(dt):
-    #     print(f"Batch {batch_idx + 1}")
-    #     print(f"Batch data shape: {batch_data.shape}")  # Should be (batch_size, ...)
-    #     print(f"Batch labels shape: {batch_labels.shape}")  # Should be (batch_size,)
-
-    #     # Print the first sample in the batch
-    #     print("\nFirst sample in batch:")
-    #     print(f"Data: {batch_data[0]}")
-    #     print(f"Label: {batch_labels[0]}")
-
-    #     # Stop after printing a few batches
-    #     if batch_idx >= 2:  # Print only 3 batches
-    #         break
-
-    # print("\nDataLoader test complete.")
-
-
 if __name__ == "__main__":
-    main()
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
+    # Load dataset
+    dataset = HSIDataset(dataset_name="SA", patch_size=25, train_rate=0.3, val_rate=0.1, n_pca=15)
+
+    # # Initialize model
+    # model = HybridSN(in_channels=15, patch_size=25, num_classes=16)
+
+    # # Train the model
+    # trainer = Trainer(model, dataset, device)
+    # trainer.train()
+
+    # # Evaluate the model
+    # trainer.evaluate()
+

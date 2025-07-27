@@ -6,6 +6,27 @@
 
 This project classifies Hyper Spectral Images (HSIs) of land area captured via Satelite.
 
+## Prerequisites
+
+install conda or miniconda and make for windows
+
+## Installation Guide
+
+setup conda environment for python 3.10
+```
+make create_environment
+```
+
+install requirements 
+```
+make requirements
+```
+
+Download Data
+```
+make data
+```
+
 ## Project Organization
 
 ```

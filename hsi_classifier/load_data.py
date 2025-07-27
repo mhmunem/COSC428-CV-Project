@@ -1,178 +1,117 @@
 import os
-from pathlib import Path
-import time
-from typing import List
-
-from loguru import logger
-import numpy as np
-import requests
-import scipy.io as sio
+from scipy.io import loadmat
 from sklearn.model_selection import train_test_split
-
-from hsi_classifier.config import DATASET_URLS, INTERIM_DATA_DIR, RAW_DATA_DIR
-
-# Global Variables
-DEFAULT_TEST_RATIO = 0.80
-
-
-def ensure_directory_exists(directory_path: Path | str) -> None:
-    """Ensure the directory for the given path exists."""
-    if isinstance(directory_path, str):
-        directory_path = Path(directory_path)
-    directory_path.mkdir(parents=True, exist_ok=True)
+import numpy as np
+from loguru import logger
+import typer
+from pathlib import Path
 
 
-def download_file(
-    file_url: str, output_file_path: str, max_retries: int = 3, delay: int = 5
-) -> None:
-    """Download a file with resume support and retries."""
-    retries = 0
-    while retries < max_retries:
-        try:
-            # Check if the file already exists and get its size
-            if os.path.exists(output_file_path):
-                file_size = os.path.getsize(output_file_path)
-                headers = {"Range": f"bytes={file_size}-"}
-            else:
-                file_size = 0
-                headers = {}
+from hsi_classifier.config import LOG_DIR, RAW_DATA_DIR, INTERIM_DATA_DIR, DATASET_METADATA
 
-            # Start or resume the download
-            response = requests.get(file_url, headers=headers, stream=True)
-            response.raise_for_status()
+app = typer.Typer()
 
-            # Check if the server supports partial content (resume)
-            if response.status_code == 206:  # Partial Content
-                logger.info(
-                    f"Resuming download of {os.path.basename(output_file_path)} from byte {file_size}..."
-                )
-            elif response.status_code == 200:  # Full Content
-                logger.info(f"Starting new download of {os.path.basename(output_file_path)}...")
-            else:
-                raise requests.exceptions.RequestException(
-                    f"Unexpected status code: {response.status_code}"
-                )
+DEFAULT_DATASET = "IP"
+DEFAULT_TEST_SIZE = 0.2
+DEFAULT_VAL_SIZE = 0.1
+RANDOM_STATE = 42
 
-            # Write to the file in append mode if resuming
-            mode = "ab" if file_size > 0 else "wb"
-            with open(output_file_path, mode) as file:
-                for chunk in response.iter_content(chunk_size=8192):
-                    file.write(chunk)
+class HSIDataLoader:
+    def __init__(self,
+                 data_path:Path,
+                 label_path:Path,
+                 save_path:Path,
+                 test_size:float=DEFAULT_TEST_SIZE,
+                 val_size:float=DEFAULT_VAL_SIZE,
+                 random_state:int=RANDOM_STATE):
+        self.data_path = data_path
+        self.label_path = label_path
+        self.save_path = save_path
+        self.test_size = test_size
+        self.val_size = val_size
+        self.random_state = random_state
 
-            logger.success(f"File downloaded successfully: {output_file_path}")
-            return
-        except requests.exceptions.RequestException as error:
-            retries += 1
-            logger.warning(
-                f"Error downloading {file_url} (attempt {retries}/{max_retries}): {error}"
-            )
-            if retries < max_retries:
-                time.sleep(delay)
-        except Exception as error:
-            logger.error(f"Exception occurred while downloading {file_url}: {error}")
-            return
-    logger.error(f"Failed to download {file_url} after {max_retries} retries.")
+        self.X = None
+        self.y = None
 
+    def load(self):
+        logger.info(f"Loading data from {self.data_path}")
+        data = loadmat(self.data_path)
+        first_key = next(key for key in data.keys() if not key.startswith('__'))
+        image = data[first_key]
 
-def download_single_file(file_url: str, target_directory: Path | str) -> None:
-    """Download a single file if it doesn't already exist."""
-    file_name = os.path.basename(file_url)
-    full_file_path = os.path.join(target_directory, file_name)
-    if not os.path.exists(full_file_path):
-        logger.info(f"Downloading {file_name}...")
-        download_file(file_url, full_file_path)
-    else:
-        logger.info(f"{file_name} already exists. Skipping.")
+        logger.info(f"Loading labels from {self.label_path}")
+        labels = loadmat(self.label_path)
+        first_key = next(key for key in labels.keys() if not key.startswith('__'))
+        label_map = labels[first_key]
+
+        self.X = image
+        self.y = label_map
+
+        logger.success(f"Loaded {self.X.shape[0]} labeled pixels with {self.X.shape[1]} bands")
+
+    def return_data(self):
+        return self.X
+
+    def return_labels(self):
+        return self.y
+
+    def save(self, x, file_name: str):
+        os.makedirs(self.save_path, exist_ok=True)
+        save_file = self.save_path / f"{file_name}.npy"
+        np.save(save_file, x)
+        logger.info(f"Saved {file_name}.npy to {self.save_path}")
 
 
-def download_multiple_files(file_urls: List[str], target_directory: Path | str) -> None:
-    """Download multiple files if they don't already exist."""
-    for file_url in file_urls:
-        download_single_file(file_url, target_directory)
+    def split(self):
+        logger.info("Splitting data into train, validation, and test sets")
+        X_train, X_temp, y_train, y_temp = train_test_split(
+            self.X, self.y,
+            test_size=self.test_size + self.val_size,
+            random_state=self.random_state,
+            # stratify=self.y
+        )
+
+        val_ratio = self.val_size / (self.test_size + self.val_size)
+        X_val, X_test, y_val, y_test = train_test_split(
+            X_temp, y_temp,
+            test_size=(1 - val_ratio),
+            random_state=self.random_state,
+            # stratify=y_temp
+        )
+
+        # Save the splits
+        self.save(X_train, "X_train")
+        self.save(y_train, "y_train")
+        self.save(X_val, "X_val")
+        self.save(y_val, "y_val")
+        self.save(X_test, "X_test")
+        self.save(y_test, "y_test")
+
+        logger.success(f"Split complete: Train={len(y_train)}, Val={len(y_val)}, Test={len(y_test)}")
+        return X_train, y_train, X_val, y_val, X_test, y_test
 
 
-def get_dataset_urls(dataset_type: str) -> List[str]:
-    """Return the URLs for the specified dataset type."""
-    if dataset_type not in DATASET_URLS:
-        raise ValueError("Invalid dataset_type. Choose from 'IP', 'PU', or 'SA'.")
-    return DATASET_URLS[dataset_type]
 
 
-def validate_dataset_type(dataset_type: str) -> str:
-    """Validate and normalize the dataset type."""
-    dataset_type = dataset_type.upper()
-    valid_dataset_types = {"IP", "PU", "SA"}
-    if dataset_type not in valid_dataset_types:
-        raise ValueError(f"Invalid dataset_type. Choose from {valid_dataset_types}.")
-    return dataset_type
 
+@app.command()
+def main(data_name:str = DEFAULT_DATASET):
+  data_path =  RAW_DATA_DIR/data_name/"data.mat"
+  label_path =  RAW_DATA_DIR/data_name/"labels.mat"
+  save_path = INTERIM_DATA_DIR/data_name
 
-def download_dataset(dataset_type: str, target_directory: Path | str = RAW_DATA_DIR) -> None:
-    """Download data files based on the specified dataset type."""
-    dataset_type = validate_dataset_type(dataset_type)
-    dataset_urls = get_dataset_urls(dataset_type)
-    ensure_directory_exists(target_directory)
-    download_multiple_files(dataset_urls, target_directory)
+  logger.add(f"{LOG_DIR}/pipeline.log", rotation="1 MB")
+  logger.info(f"Loading dataset: {data_name}")
 
+  loader = HSIDataLoader(data_path, label_path, save_path)
+  loader.load()
+  X_train, y_train, X_val, y_val, X_test, y_test = loader.split()
 
-def load_raw_data(
-    data_type: str, data_path: Path | str = RAW_DATA_DIR
-) -> tuple[np.ndarray, np.ndarray]:
-    if data_type == "IP":
-        data = sio.loadmat(os.path.join(data_path, "Indian_pines_corrected.mat"))[
-            "indian_pines_corrected"
-        ]
-        labels = sio.loadmat(os.path.join(data_path, "Indian_pines_gt.mat"))["indian_pines_gt"]
-    elif data_type == "SA":
-        data = sio.loadmat(os.path.join(data_path, "Salinas_corrected.mat"))["salinas_corrected"]
-        labels = sio.loadmat(os.path.join(data_path, "Salinas_gt.mat"))["salinas_gt"]
-    elif data_type == "PU":
-        data = sio.loadmat(os.path.join(data_path, "PaviaU.mat"))["paviaU"]
-        labels = sio.loadmat(os.path.join(data_path, "PaviaU_gt.mat"))["paviaU_gt"]
-    else:
-        raise ValueError("Invalid dataset name. Choose from 'IP', 'SA', or 'PU'.")
-    return data, labels
-
-
-def create_traning_data(
-    data: np.ndarray, labels: np.ndarray, test_size: float = DEFAULT_TEST_RATIO
-) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
-    """Creates traing and testing data from data and labels"""
-    X_train, X_test, y_train, y_test = train_test_split(data, labels, test_size=test_size)
-    return X_train, y_train, X_test, y_test
-
-
-def save_interim_data(
-    X_train: np.ndarray, y_train: np.ndarray, X_test: np.ndarray, y_test: np.ndarray
-) -> None:
-    # Step 1: create or check directory exist
-    ensure_directory_exists(INTERIM_DATA_DIR)
-    # Step 2: Save the files
-    np.save(os.path.join(INTERIM_DATA_DIR, "X_train.npy"), X_train)
-    np.save(os.path.join(INTERIM_DATA_DIR, "y_train.npy"), y_train)
-    np.save(os.path.join(INTERIM_DATA_DIR, "X_test.npy"), X_test)
-    np.save(os.path.join(INTERIM_DATA_DIR, "y_test.npy"), y_test)
-    print(f"Interim data saved successfully to {INTERIM_DATA_DIR}")
-
-
-def load_image_data(file_path: Path | str):
-    return np.load(file_path)
-
-
-def load_label_data(file_path: Path | str):
-    return np.load(file_path)
-
-
-def main():
-    # Download Indian Pines dataset
-    # download_dataset("IP")
-    data_type = "IP"
-    X, y = load_raw_data(data_type)
-    X_train, y_train, X_test, y_test = create_traning_data(X, y)
-    save_interim_data(X_train, y_train, X_test, y_test)
-    print(X_train.shape)
-    print(y_train.shape)
+  logger.info(f"Train shape: {X_train.shape}, \n Validation shape: {X_val.shape}, \nTest shape: {X_test.shape}")
+  logger.info(f"Train label shape: {y_train.shape}, \n Validation label shape: {y_val.shape}, \n Test label shape: {y_test.shape}")
+  logger.success(f"Load complete: {data_name}")
 
 
 if __name__ == "__main__":
-    main()
+    app()
