@@ -17,6 +17,11 @@ setup conda environment for python 3.10
 make create_environment
 ```
 
+activate the environment
+```
+conda activate hsi_classifier
+```
+
 install requirements 
 ```
 make requirements
