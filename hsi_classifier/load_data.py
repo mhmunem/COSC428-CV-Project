@@ -14,7 +14,7 @@ app = typer.Typer()
 DEFAULT_DATASET = "IP"
 DEFAULT_TEST_SIZE = 0.2
 DEFAULT_VAL_SIZE = 0.1
-RANDOM_STATE = 42
+RANDOM_STATE = 345
 
 
 class HSIDataLoader:
