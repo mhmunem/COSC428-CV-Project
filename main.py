@@ -4,7 +4,7 @@ from loguru import logger
 from tqdm import tqdm
 
 
-from hsi_classifier.load_data import load_raw_data, create_traning_data, save_interim_data
+from hsi_classifier.interium_data import load_raw_data, create_traning_data, save_interim_data
 # from hsi_classifier.dataset import load_data
 # Global configuration
 DATA_TYPE = "IP"

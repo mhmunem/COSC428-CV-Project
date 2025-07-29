@@ -58,6 +58,13 @@ data: requirements
 	$(PYTHON_INTERPRETER) hsi_classifier/make_dataset.py --data-name SA
 	$(PYTHON_INTERPRETER) hsi_classifier/make_dataset.py --data-name PU
 
+## Make Interium dataset
+.PHONY: interium_data
+interium_data: requirements
+	$(PYTHON_INTERPRETER) hsi_classifier/interium_data.py --data-name IP
+	$(PYTHON_INTERPRETER) hsi_classifier/interium_data.py --data-name SA
+	$(PYTHON_INTERPRETER) hsi_classifier/interium_data.py --data-name PU
+
 ## Run a specific Python file on hsi_classifier
 .PHONY: run
 run:
