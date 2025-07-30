@@ -57,6 +57,7 @@ data: requirements
 	$(PYTHON_INTERPRETER) hsi_classifier/make_dataset.py --data-name IP
 	$(PYTHON_INTERPRETER) hsi_classifier/make_dataset.py --data-name SA
 	$(PYTHON_INTERPRETER) hsi_classifier/make_dataset.py --data-name PU
+	$(PYTHON_INTERPRETER) hsi_classifier/make_dataset.py --data-name BS
 
 ## Make Interium dataset
 .PHONY: interium_data

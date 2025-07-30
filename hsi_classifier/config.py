@@ -26,6 +26,7 @@ DATASET_METADATA = {
     "IP": {
         "data_url": "http://www.ehu.eus/ccwintco/uploads/6/67/Indian_pines_corrected.mat",
         "label_url": "http://www.ehu.eus/ccwintco/uploads/c/c4/Indian_pines_gt.mat",
+        "rgb_bands": (43, 21, 11),    
         "classes": 16,
         "class_names": [
             "Alfalfa",
@@ -49,6 +50,7 @@ DATASET_METADATA = {
     "SA": {
         "data_url": "http://www.ehu.es/ccwintco/uploads/a/a3/Salinas_corrected.mat",
         "label_url": "http://www.ehu.eus/ccwintco/uploads/f/fa/Salinas_gt.mat",
+        "rgb_bands": (43, 21, 11),    
         "classes": 16,
         "class_names": [
             "Broccoli_green_weeds_1",
@@ -72,6 +74,7 @@ DATASET_METADATA = {
     "PU": {
         "data_url": "http://www.ehu.es/ccwintco/uploads/e/ee/PaviaU.mat",
         "label_url": "http://www.ehu.es/ccwintco/uploads/5/50/PaviaU_gt.mat",
+        "rgb_bands": (55, 41, 12),    
         "classes": 9,
         "class_names": [
             "Asphalt",
@@ -85,6 +88,29 @@ DATASET_METADATA = {
             "Shadows",
         ],
     },
+    "BS": {
+        "data_url":"http://www.ehu.es/ccwintco/uploads/7/72/Botswana.mat",
+        "label_url":"http://www.ehu.es/ccwintco/uploads/5/58/Botswana_gt.mat",
+        "rgb_bands": (75, 33, 15),    
+        "classes": 14,
+        "class_names": [
+            "Water",
+            "Hippo grass",
+            "Floodplain grasses 1",
+            "Floodplain grasses 2",
+            "Reeds",
+            "Riparian",
+            "Firescar",
+            "Island interior",
+            "Acacia woodlands",
+            "Acacia shrublands",
+            "Acacia grasslands",
+            "Short mopane",
+            "Mixed mopane",
+            "Exposed soils",
+        ],
+    },
+    
 }
 
 
