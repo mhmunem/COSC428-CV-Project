@@ -17,29 +17,35 @@ DEFAULT_TEST_SIZE = 0.2
 DEFAULT_VAL_SIZE = 0.1
 RANDOM_STATE = 345
 PATCH_SIZE = 2
+IGNORED_LABELS = [0]
+SUPERVISION = "full"
 
 class HSIProcessor(Dataset):
     """ Generic class for a hyperspectral scene """
 
-    def __init__(self, data_path, label_path, save_path, **hyperparams):
+    def __init__(self, 
+                 data_path: Path | str, 
+                 label_path: Path | str, 
+                 save_path: Path | str, 
+                 **hyperparams):
         super(HSIProcessor, self).__init__()
-        self.data_path = data_path
-        self.label_path = label_path
+        self.data_path = Path(data_path)
+        self.label_path = Path(label_path)
         self.save_path = Path(save_path)
         self.name = hyperparams.get("dataset", "unknown")
         self.patch_size = hyperparams.get("patch_size", PATCH_SIZE)
-        self.ignored_labels = set(hyperparams.get("ignored_labels", [0]))
+        self.ignored_labels = set(hyperparams.get("ignored_labels", IGNORED_LABELS))
         self.flip_augmentation = hyperparams.get("flip_augmentation", False)
         self.radiation_augmentation = hyperparams.get("radiation_augmentation", False)
         self.mixture_augmentation = hyperparams.get("mixture_augmentation", False)
         self.center_pixel = hyperparams.get("center_pixel", True)
-        supervision = hyperparams.get("supervision", "full")
+        supervision = hyperparams.get("supervision", SUPERVISION)
 
         # Create save directory
         self.save_path.mkdir(parents=True, exist_ok=True)
 
         # Load data and labels
-        self.load()
+        self._load()
 
         # Build mask based on supervision
         if supervision == "full":
@@ -59,7 +65,7 @@ class HSIProcessor(Dataset):
         self.labels = np.array([self.label[x, y] for x, y in self.indices])
         np.random.shuffle(self.indices)
 
-    def load(self):
+    def _load(self) -> None:
         logger.info(f"Loading data from {self.data_path}")
         data = loadmat(self.data_path)
         first_key = next(key for key in data.keys() if not key.startswith("__"))
@@ -100,7 +106,7 @@ class HSIProcessor(Dataset):
                     x, y = self.indices[l_indice]
                     data2[idx] = self.data[x, y]
         return (alpha1 * data + alpha2 * data2) / (alpha1 + alpha2) + beta * noise
-
+    
     def __len__(self):
         return len(self.indices)
 
@@ -180,7 +186,7 @@ def save_dataset_splits(train_dataset, val_dataset, test_dataset, save_path):
     logger.success("Dataset splits saved successfully")
 
 def save_metadata(dataset, save_path):
-    """Save dataset metadata"""
+    """ Save dataset metadata """
     save_path = Path(save_path)
     metadata = {
         'dataset_name': dataset.name,
@@ -225,7 +231,7 @@ def main(data_name: str = DEFAULT_DATASET):
     label_path = RAW_DATA_DIR / data_name / "labels.mat"
     save_path = PROCESSED_DATA_DIR / data_name
 
-    logger.add(f"{LOG_DIR}/processing.log", rotation="1 MB")
+    logger.add(f"{LOG_DIR}/preprocessing.log", rotation="1 MB")
     logger.info(f"Processing dataset: {data_name}")
 
     # Create HSIProcessor dataset

@@ -4,7 +4,6 @@ import subprocess
 
 from loguru import logger
 
-# from tqdm import tqdm
 import typer
 
 from hsi_classifier.config import DATASET_METADATA, LOG_DIR, RAW_DATA_DIR
@@ -16,29 +15,25 @@ app = typer.Typer()
 DEFAULT_DATASET = "IP"
 
 
-class HSIDataDownloader:
+class HSIDownloader:
     def __init__(
         self,
         data_name: str,
         data_url: str,
         label_url: str,
-        base_dir: str | Path = RAW_DATA_DIR,
-        rgb_bands=None,
-        num_classes=None,
-        class_names=None,
+        **metadata
         ):
         self.data_name = data_name
         self.data_url = data_url
         self.label_url = label_url
-        self.base_dir = Path(base_dir)
-        self.dataset_dir = self.base_dir / data_name
+        self.dataset_dir = RAW_DATA_DIR / data_name
         self.data_file_path = self.dataset_dir / "data.mat"
         self.label_file_path = self.dataset_dir / "labels.mat"
-        self.rgb_bands =  rgb_bands  
-        self.num_classes = num_classes
-        self.class_names = class_names or [f"Class {i}" for i in range(num_classes or 0)]
+        self.rgb_bands =  metadata.get("rgb_bands")  
+        self.num_classes = metadata.get("num_classes")
+        self.class_names = metadata.get("class_names") or [f"Class {i}" for i in range(self.num_classes or 0)]
 
-    def download(self, force: bool = False) -> tuple[Path, Path, bool]:
+    def download(self, force: bool = False) ->  bool:
         """Download both data and label files. Returns (data_path, label_path, success)"""
         self.dataset_dir.mkdir(parents=True, exist_ok=True)
         
@@ -60,7 +55,7 @@ class HSIDataDownloader:
         else:
             logger.info(f"Data file already exists at {self.data_file_path}")
 
-        return self.data_file_path, self.label_file_path, success
+        return success
 
     def _download_file(self, url: str, path: Path) -> bool:
         try:
@@ -100,6 +95,7 @@ def main(data_name: str = DEFAULT_DATASET):
     # Setup logging
     logger.add(f"{LOG_DIR}/download.log", rotation="1 MB")
     logger.info("Downloading dataset...")
+    
     # Metadata dictionary
     datasets = DATASET_METADATA
 
@@ -108,19 +104,19 @@ def main(data_name: str = DEFAULT_DATASET):
         logger.error(f"Dataset '{data_name}' not found in metadata.")
         return
 
-    info = datasets[data_name]
+    metadata = datasets[data_name]
     logger.info(f"Downloading dataset: {data_name}")
 
-    downloader = HSIDataDownloader(
+    downloader = HSIDownloader(
         data_name=data_name,
-        data_url=info["data_url"],
-        label_url=info["label_url"],
-        num_classes=info["classes"],
-        class_names=info["class_names"],
-        rgb_bands=info.get("rgb_bands"),
+        data_url=metadata.get("data_url"),
+        label_url=metadata.get("label_url"),
+        num_classes=metadata.get("classes"),
+        class_names=metadata.get("class_names"),
+        rgb_bands=metadata.get("rgb_bands"),
     )
 
-    data_path, label_path, success = downloader.download()
+    success = downloader.download()
     
     if success:
         metadata = downloader.get_metadata()
