@@ -210,3 +210,7 @@ __marimo__/
 01_raw/
 02_intermediate/
 03_processed/
+.old
+/data/
+/.vscode/
+.logs
