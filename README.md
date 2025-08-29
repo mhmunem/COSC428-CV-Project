@@ -40,6 +40,9 @@ Ensure you have the following installed on your local machine:
 
 ## Downloadnig Data
 Run the `download_data.py` file on src to download all the data.
+```python 
+python ./src/download_data.py
+```
 
 ---
 
