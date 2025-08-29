@@ -1,0 +1,18 @@
+# Python 3.10
+loguru
+matplotlib
+mkdocs
+numpy
+pip
+python-dotenv
+requests
+ruff
+seaborn
+spectral
+scikit-learn
+scipy
+tensorflow
+torch
+tqdm
+typer
+-e .
