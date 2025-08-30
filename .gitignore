@@ -207,6 +207,4 @@ marimo/_lsp/
 __marimo__/
 
 # project ignore files
-01_raw/
-02_intermediate/
-03_processed/
+data
