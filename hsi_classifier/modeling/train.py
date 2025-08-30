@@ -1,12 +1,12 @@
 from pathlib import Path
 
 from loguru import logger
-from tqdm import tqdm
 import typer
 
 from hsi_classifier.config import MODELS_DIR, PROCESSED_DATA_DIR
 
 app = typer.Typer()
+
 
 @app.command()
 def main(

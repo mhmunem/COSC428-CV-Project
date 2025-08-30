@@ -3,7 +3,6 @@ from pathlib import Path
 import subprocess
 
 from loguru import logger
-
 import typer
 
 from hsi_classifier.config import DATASET_METADATA, LOG_DIR, RAW_DATA_DIR
@@ -11,32 +10,27 @@ from hsi_classifier.config import DATASET_METADATA, LOG_DIR, RAW_DATA_DIR
 app = typer.Typer()
 
 
-
 DEFAULT_DATASET = "IP"
 
 
 class HSIDownloader:
-    def __init__(
-        self,
-        data_name: str,
-        data_url: str,
-        label_url: str,
-        **metadata
-        ):
+    def __init__(self, data_name: str, data_url: str, label_url: str, **metadata):
         self.data_name = data_name
         self.data_url = data_url
         self.label_url = label_url
         self.dataset_dir = RAW_DATA_DIR / data_name
         self.data_file_path = self.dataset_dir / "data.mat"
         self.label_file_path = self.dataset_dir / "labels.mat"
-        self.rgb_bands =  metadata.get("rgb_bands")  
+        self.rgb_bands = metadata.get("rgb_bands")
         self.num_classes = metadata.get("num_classes")
-        self.class_names = metadata.get("class_names") or [f"Class {i}" for i in range(self.num_classes or 0)]
+        self.class_names = metadata.get("class_names") or [
+            f"Class {i}" for i in range(self.num_classes or 0)
+        ]
 
-    def download(self, force: bool = False) ->  bool:
+    def download(self, force: bool = False) -> bool:
         """Download both data and label files. Returns (data_path, label_path, success)"""
         self.dataset_dir.mkdir(parents=True, exist_ok=True)
-        
+
         success = True
 
         # Download label file
@@ -78,12 +72,11 @@ class HSIDownloader:
             logger.error(f"Exception occurred while downloading {url}: {e}")
             return False
 
-        
     def get_metadata(self) -> dict:
         return {
             "name": self.data_name,
             "num_classes": self.num_classes,
-            "rgb_bands": self.rgb_bands,    
+            "rgb_bands": self.rgb_bands,
             "class_names": self.class_names,
             "data_file": str(self.data_file_path),
             "label_file": str(self.label_file_path),
@@ -95,7 +88,7 @@ def main(data_name: str = DEFAULT_DATASET):
     # Setup logging
     logger.add(f"{LOG_DIR}/download.log", rotation="1 MB")
     logger.info("Downloading dataset...")
-    
+
     # Metadata dictionary
     datasets = DATASET_METADATA
 
@@ -117,12 +110,13 @@ def main(data_name: str = DEFAULT_DATASET):
     )
 
     success = downloader.download()
-    
+
     if success:
         metadata = downloader.get_metadata()
         logger.success(f"Download complete: {metadata}")
     else:
         logger.error("Download failed")
+
 
 if __name__ == "__main__":
     app()

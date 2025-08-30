@@ -54,10 +54,10 @@ format:
 ## Make dataset
 .PHONY: data
 data: requirements
-	$(PYTHON_INTERPRETER) hsi_classifier/datasets.py --data-name IP
-	$(PYTHON_INTERPRETER) hsi_classifier/datasets.py --data-name SA
-	$(PYTHON_INTERPRETER) hsi_classifier/datasets.py --data-name PU
-	$(PYTHON_INTERPRETER) hsi_classifier/datasets.py --data-name BS
+	$(PYTHON_INTERPRETER) hsi_classifier/dataset.py --data-name IP
+	$(PYTHON_INTERPRETER) hsi_classifier/dataset.py --data-name SA
+	$(PYTHON_INTERPRETER) hsi_classifier/dataset.py --data-name PU
+	$(PYTHON_INTERPRETER) hsi_classifier/dataset.py --data-name BS
 
 ## Make Interium dataset
 .PHONY: processed_data
